@@ -71,15 +71,24 @@ def custom_login(request):
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
+        print(username, password)
         # Check if the username and password match any user
-        user = head.objects.get(username=username, password=password)
-        if user is not None:
+        user = head.objects.filter(username=username, password=password)
+        print(user)
+        if len(user) > 0:
+            print(user)
             # A backend authenticated the credentials
-            login(request, user)
+            login(request, user.first())
             return redirect('dashboard')
         else:
             # Invalid credentials
-            messages.error(request, "Invalid username or password.")
+            try:
+                user = head.objects.get(username=username)
+                if user.check_password(password):
+                    login(request, user)
+                    return redirect('dashboard')
+            except head.DoesNotExist:
+                messages.error(request, "Invalid username or password.")
     return render(request, 'login.html')
 @login_required
 def registration_list(request):
